@@ -3,4 +3,12 @@ name = "packed_dsl"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = ["macros"]
+
+[features]
+default = ["std"]
+std = ["embedded-io/std"]
+
 [dependencies]
+embedded-io = "0.7.1"
