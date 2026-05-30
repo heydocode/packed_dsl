@@ -3,4 +3,14 @@ name = "packed_dsl"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = ["macros"]
+
+[features]
+default = ["std"]
+std = ["bitstream-io/std"]
+
 [dependencies]
+arrayvec = "0.7.6"
+bitstream-io = { version = "4.10.0", default-features = false }
+packed_dsl_macros = { path = "macros", version = "0.1.0" }
