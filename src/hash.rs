@@ -1,4 +1,4 @@
-pub const fn hash_str_with_other_hash(contents: &str, other_hash: u64) -> u64 {
+const fn _hash_str_with_other_hash(contents: &str, other_hash: u64) -> u64 {
     let left = contents.as_bytes();
     let right = other_hash.to_ne_bytes();
 
@@ -37,6 +37,42 @@ pub const fn hash_str(contents: &str) -> u64 {
     hash(bytes, bytes.len())
 }
 
+pub const fn rehash_with_n_hashes(base_hash: u64, other_hashes: &[u64]) -> u64 {
+    const CONTENTS_MAX_LEN: usize = 1_000;
+    assert!(
+        other_hashes.len() <= CONTENTS_MAX_LEN,
+        "hash_with_other_hash: other_hashes len can't be bigger than 1_000"
+    );
+
+    const SECOND_CONTENTS_MAX_LEN: usize = CONTENTS_MAX_LEN * (size_of::<u64>() / size_of::<u8>());
+    const TOTAL_MAX_LEN: usize = SECOND_CONTENTS_MAX_LEN + size_of::<u64>();
+    let mut trans_buf = [0u8; SECOND_CONTENTS_MAX_LEN];
+    let mut i = 0;
+    while i < other_hashes.len() {
+        let temp = other_hashes[i].to_le_bytes();
+        let mut i2 = 0;
+        while i2 < temp.len() {
+            trans_buf[(i * 4) + i2] = temp[i2];
+            i2 += 1;
+        }
+        i += 1;
+    }
+
+    let base_hash_ar = base_hash.to_le_bytes();
+
+    // Note that this huge array disappears at runtime.
+    // This is required to combine both arrays.
+    let bytes: [u8; TOTAL_MAX_LEN] = {
+        let mut bytes: [u8; TOTAL_MAX_LEN] = [0; TOTAL_MAX_LEN];
+        let (one, two) = bytes.split_at_mut(size_of::<u64>());
+        one.copy_from_slice(&base_hash_ar);
+        two.copy_from_slice(&trans_buf);
+        bytes
+    };
+
+    hash(&bytes, base_hash_ar.len() + (other_hashes.len() * (size_of::<u64>() / size_of::<u8>())))
+}
+
 const fn hash(bytes: &[u8], len: usize) -> u64 {
     const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
     const FNV_PRIME: u64 = 0x100000001b3;
@@ -55,7 +91,10 @@ const fn hash(bytes: &[u8], len: usize) -> u64 {
         i += 1;
     }
 
-    assert!(hash != 0, "The hash is equal to zero, meaning that it's unchangeable, please modify your input");
+    assert!(
+        hash != 0,
+        "The hash is equal to zero, meaning that it's unchangeable, please modify your input"
+    );
 
     hash
 }
