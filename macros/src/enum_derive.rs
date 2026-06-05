@@ -61,20 +61,18 @@ fn parse_group(group: Group, mut par_off: u32) -> Vec<(u32, String)> {
 }
 
 pub(crate) fn generate_impl(name: String, map: Vec<(String, Vec<(u32, String)>)>) -> TokenStream {
-    let base_hash = format!("::packed_dsl::hash::hash_str(\"{}\")", name);
+    let enum_variant_num = map.len();
+    let base_hash = format!("packed_dsl::hash::hash(&{}u64.to_le_bytes(), 1)", enum_variant_num);
     
     let mut hashes = String::new();
     for key in map.clone() {
         for val in key.1 {
-            hashes += format!("<{} as ::packed_dsl::proto::DslProto<'static>>::HASH,", val.1).as_str();
+            hashes += format!("<{} as packed_dsl::proto::DslProto<'static>>::HASH,", val.1).as_str();
         }
     }
-
-    let enum_variant_num = map.len();
-    hashes += format!("{},", enum_variant_num).as_str();
     
     let hash_block = format!(
-        "::packed_dsl::hash::rehash_with_n_hashes({}, &[{}])",
+        "packed_dsl::hash::rehash_with_n_hashes({}, &[{}])",
         base_hash, hashes
     );
 
@@ -83,15 +81,15 @@ pub(crate) fn generate_impl(name: String, map: Vec<(String, Vec<(u32, String)>)>
 
     let output = format!("
         impl<'a> DslProto<'a> for {} {{
-            type Error = ::packed_dsl::no_std_io2::io::Error;
+            type Error = packed_dsl::no_std_io2::io::Error;
 
             const HASH: u64 = {};
 
-            fn serialize<W: ::packed_dsl::bitstream_io::BitWrite + ?Sized>(&self, w: &mut W) -> Result<(), Self::Error> {{
+            fn serialize<W: packed_dsl::bitstream_io::BitWrite + ?Sized>(&self, w: &mut W) -> Result<(), Self::Error> {{
                 Ok(())
             }}
 
-            fn deserialize<R: ::packed_dsl::bitstream_io::BitRead + ?Sized>(r: &mut R, buffer: &'a mut [u8; 255]) -> Result<Self, Self::Error> {{
+            fn deserialize<R: packed_dsl::bitstream_io::BitRead + ?Sized>(r: &mut R, buffer: &'a mut [u8; 255]) -> Result<Self, Self::Error> {{
                 panic!(\"\");
             }}
         }}

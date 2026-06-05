@@ -73,7 +73,7 @@ pub const fn rehash_with_n_hashes(base_hash: u64, other_hashes: &[u64]) -> u64 {
     hash(&bytes, base_hash_ar.len() + (other_hashes.len() * (size_of::<u64>() / size_of::<u8>())))
 }
 
-const fn hash(bytes: &[u8], len: usize) -> u64 {
+pub const fn hash(bytes: &[u8], len: usize) -> u64 {
     const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
     const FNV_PRIME: u64 = 0x100000001b3;
 
