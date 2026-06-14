@@ -62,11 +62,12 @@ fn parse_group(group: Group, mut par_off: u32) -> Vec<(u32, String)> {
 
 pub(crate) fn generate_impl(name: String, map: Vec<(String, Vec<(u32, String)>)>) -> TokenStream {
     let enum_variant_num = map.len();
-    let base_hash = format!("packed_dsl::hash::hash(&{}u64.to_le_bytes(), 1)", enum_variant_num);
+    let base_hash = format!("packed_dsl::hash::hash(&{}u64.to_le_bytes(), size_of::<u64>())", enum_variant_num);
     
     let mut hashes = String::new();
-    for key in map.clone() {
-        for val in key.1 {
+    for (index, key) in map.clone().iter().enumerate() {
+        hashes += format!("packed_dsl::hash::hash(&{}u64.to_le_bytes(), size_of::<u64>()),", index).as_str();
+        for val in &key.1 {
             hashes += format!("<{} as packed_dsl::proto::DslProto<'static>>::HASH,", val.1).as_str();
         }
     }
@@ -75,6 +76,8 @@ pub(crate) fn generate_impl(name: String, map: Vec<(String, Vec<(u32, String)>)>
         "packed_dsl::hash::rehash_with_n_hashes({}, &[{}])",
         base_hash, hashes
     );
+
+    
 
     // let mut _serialize_contents = todo!("");
     // let mut _deserialize_contents = todo!("");
